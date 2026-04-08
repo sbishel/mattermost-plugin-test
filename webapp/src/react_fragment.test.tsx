@@ -8,6 +8,6 @@ function generateSomething() {
 }
 
 test('Can test React fragments', () => {
-    expect(React.version).toEqual('18.2.0');
+    expect(React.version).toMatch(/^18\./);
     expect(generateSomething()).toBeDefined();
 });

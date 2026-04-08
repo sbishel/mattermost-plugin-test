@@ -3,13 +3,25 @@
 
 /* eslint-disable max-lines */
 
+import type React from 'react';
 import type {Reducer} from 'redux';
 
+import type {PluginAnalyticsRow} from '@mattermost/types/admin';
 import type {WebSocketMessage} from '@mattermost/client';
-import type {Channel} from '@mattermost/types/channels';
+import type {Channel, ChannelType} from '@mattermost/types/channels';
 import type {FileInfo} from '@mattermost/types/files';
 import type {Post, PostEmbed} from '@mattermost/types/posts';
 import type {ProductScope} from '@mattermost/types/products';
+import type {GlobalState} from '@mattermost/types/store';
+
+export type Menu = {
+    id: string;
+    parentMenuId?: string;
+    text?: React.ReactNode;
+    subMenu?: Menu[];
+    action?: (...args: unknown[]) => void;
+    filter?: (id: string) => boolean;
+};
 
 export type UniqueIdentifier = string;
 export type ReactResolvable = React.ReactNode | React.ElementType;
@@ -283,12 +295,12 @@ export interface PluginRegistry {
     registerChannelHeaderButtonAction(
         ...args: [
             icon: ReactResolvable,
-            action: () => void,
+            action: (channel: Channel) => void,
             dropdownText: string,
             tooltipText: string
         ] | [{
             icon: ReactResolvable;
-            action: () => void;
+            action: (channel: Channel) => void;
             dropdownText: string;
             tooltipText: string;
         }]
@@ -382,11 +394,11 @@ export interface PluginRegistry {
     */
     registerPostWillRenderEmbedComponent(
         ...args: [
-            match: (embed: PostEmbed) => void,
+            match: (embed: PostEmbed) => boolean,
             component: ReactResolvable,
             toggleable: boolean
         ] | [{
-            match: (embed: PostEmbed) => void;
+            match: (embed: PostEmbed) => boolean;
             component: ReactResolvable;
             toggleable: boolean;
         }]
@@ -802,9 +814,9 @@ export interface PluginRegistry {
     */
     registerAdminConsolePlugin(
         ...args: [
-            func: (config: object) => void
+            func: (config: object) => object
         ] | [{
-            func: (config: object) => void;
+            func: (config: object) => object;
         }]
     ): void;
 
@@ -943,9 +955,9 @@ export interface PluginRegistry {
     */
     registerMessageWillBeUpdatedHook(
         ...args: [
-            hook: (post: Partial<Post>, oldPost: Post) => Promise<{ error: { message: string } } | { post: Post }>
+            hook: (post: Partial<Post>, oldPost: Post) => ({ error: { message: string } } | { post: Post } | Promise<{ error: { message: string } } | { post: Post }>)
         ] | [{
-            hook: (post: Partial<Post>, oldPost: Post) => Promise<{ error: { message: string } } | { post: Post }>;
+            hook: (post: Partial<Post>, oldPost: Post) => ({ error: { message: string } } | { post: Post } | Promise<{ error: { message: string } } | { post: Post }>);
         }]
     ): UniqueIdentifier;
 
