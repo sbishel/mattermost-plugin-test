@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,19 +9,16 @@ import (
 )
 
 func TestServeHTTP(t *testing.T) {
-	assert := assert.New(t)
-	plugin := Plugin{}
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	p := Plugin{}
+	p.router = p.initRouter()
 
-	plugin.ServeHTTP(nil, w, r)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/nonexistent", nil)
+
+	p.ServeHTTP(nil, w, r)
 
 	result := w.Result()
-	assert.NotNil(result)
-	defer result.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(result.Body)
-	assert.Nil(err)
-	bodyString := string(bodyBytes)
+	defer func() { _ = result.Body.Close() }()
 
-	assert.Equal("Hello, world!", bodyString)
+	assert.Equal(t, http.StatusNotFound, result.StatusCode)
 }

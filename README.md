@@ -1,117 +1,142 @@
-# Plugin Starter Template [![CircleCI branch](https://img.shields.io/circleci/project/github/mattermost/mattermost-plugin-starter-template/master.svg)](https://circleci.com/gh/mattermost/mattermost-plugin-starter-template)
+# Mattermost Test Plugin
 
-This plugin serves as a starting point for writing a Mattermost plugin. Feel free to base your own plugin off this repository.
+A Mattermost plugin that provides test infrastructure for E2E tests. It replaces the external Node.js webhook server and supplements the demo plugin with consolidated interactive dialog testing and channel header button testing.
 
-To learn more about plugins, see [our plugin documentation](https://developers.mattermost.com/extend/plugins/).
+## Features
 
-## Getting Started
-Use GitHub's template feature to make a copy of this repository by clicking the "Use this template" button.
+### Channel Header Buttons
 
-Alternatively shallow clone the repository matching your plugin name:
+Registers 15 channel header button icons on activation. Used by the Cypress E2E test MM-T1649 to verify that 16+ plugin icons collapse into a single dropdown.
+
+### `/e2e-dialog` Slash Command
+
+Opens interactive test dialogs covering all dialog element types. Subcommands:
+
+| Subcommand | Description |
+|------------|-------------|
+| *(none)* | Full dialog with one of every element type |
+| `text` | Text variants: plain, email, number, password, textarea |
+| `boolean` | Required, optional, default-true, default-false |
+| `select` | Radio, static select, user selector, channel selector |
+| `multi-select` | Multi-select options, multi-select users, dynamic search |
+| `date` | Basic date, future-only, relative default, date range |
+| `datetime` | Intervals, timezones, manual entry, constrained |
+| `no-elements` | Confirmation dialog (no form fields) |
+| `field-refresh` | Conditional fields that update on selection change |
+| `multi-step` | Three-step registration workflow |
+| `error` | Dialog that returns validation errors on submit |
+| `error-no-elements` | Confirmation dialog that returns errors |
+
+### Dialog Submission Handlers
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/dialog/submit-with-validation` | Full dialog: validates number field equals 42 |
+| `/dialog/submit-confirm` | Simple confirmation post |
+| `/dialog/submit-generic` | Formats all submission fields as a post |
+| `/dialog/error` | Always returns a dialog error |
+| `/dialog/field-refresh` | Returns updated form based on selection |
+| `/dialog/multistep` | Multi-step state machine (3 steps) |
+| `/dialog/roles` | Dynamic select endpoint for role search |
+
+## Configuration
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `EnableDialogCommands` | bool | `true` | Enable the `/e2e-dialog` slash command and dialog handlers |
+
+Configure in **System Console > Plugins > Test Plugin**.
+
+## Building
+
+```bash
+make dist
 ```
-git clone --depth 1 https://github.com/mattermost/mattermost-plugin-starter-template com.example.my-plugin
-```
 
-Note that this project uses [Go modules](https://github.com/golang/go/wiki/Modules). Be sure to locate the project outside of `$GOPATH`.
+Produces `dist/com.mattermost.test-plugin.tar.gz`.
 
-Edit `plugin.json` with your `id`, `name`, and `description`:
-```
-{
-    "id": "com.example.my-plugin",
-    "name": "My Plugin",
-    "description": "A plugin to enhance Mattermost."
-}
-```
+## Deploying
 
-Build your plugin:
-```
-make
-```
-
-This will produce a single plugin file (with support for multiple architectures) for upload to your Mattermost server:
-
-```
-dist/com.example.my-plugin.tar.gz
-```
-
-## Development
-
-To avoid having to manually install your plugin, build and deploy your plugin using one of the following options.
-
-### Deploying with Local Mode
-
-If your Mattermost server is running locally, you can enable [local mode](https://docs.mattermost.com/administration/mmctl-cli-tool.html#local-mode) to streamline deploying your plugin. Edit your server configuration as follows:
-
-```json
-{
-    "ServiceSettings": {
-        ...
-        "EnableLocalMode": true,
-        "LocalModeSocketLocation": "/var/tmp/mattermost_local.socket"
-    }
-}
-```
-
-and then deploy your plugin:
-```
+```bash
 make deploy
 ```
 
-You may also customize the Unix socket path:
-```
-export MM_LOCALSOCKETPATH=/var/tmp/alternate_local.socket
-make deploy
-```
+Requires `MM_SERVICESETTINGS_SITEURL` and either `MM_ADMIN_TOKEN` or `MM_ADMIN_USERNAME`/`MM_ADMIN_PASSWORD`.
 
-If developing a plugin with a webapp, watch for changes and deploy those automatically:
-```
-export MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-export MM_ADMIN_TOKEN=j44acwd8obn78cdcx7koid4jkr
-make watch
-```
+## For E2E Test Authors
 
-### Deploying with credentials
+Use the `/e2e-dialog` slash command in your tests instead of the webhook server. The bot posts submission data to the channel as a `custom_e2etest_plugin` post type, which you can assert against.
 
-Alternatively, you can authenticate with the server's API with credentials:
-```
-export MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-export MM_ADMIN_USERNAME=admin
-export MM_ADMIN_PASSWORD=password
-make deploy
-```
+### Cypress Migration
 
-or with a [personal access token](https://docs.mattermost.com/developer/personal-access-tokens.html):
-```
-export MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-export MM_ADMIN_TOKEN=j44acwd8obn78cdcx7koid4jkr
-make deploy
-```
+| Old trigger (webhook) | New command |
+|----------------------|-------------|
+| `/dialog_request` | `/e2e-dialog` |
+| `/simple_dialog_request` | `/e2e-dialog no-elements` |
+| `/boolean_dialog_request` | `/e2e-dialog boolean` |
+| `/multiselect_dialog_request` | `/e2e-dialog multi-select` |
+| `/dynamic_select_dialog_request` | `/e2e-dialog multi-select` |
+| `/datetime_dialog_request` (date) | `/e2e-dialog date` |
+| `/datetime_dialog_request` (datetime) | `/e2e-dialog datetime` |
+| `/dialog/field-refresh` | `/e2e-dialog field-refresh` |
+| `/dialog/multistep` | `/e2e-dialog multi-step` |
 
-## Q&A
+### Mobile Migration
 
-### How do I make a server-only or web app-only plugin?
+| Old command | New command |
+|-------------|-------------|
+| `/dialog basic` | `/e2e-dialog text` |
+| `/dialog error` | `/e2e-dialog error` |
+| `/dialog boolean` | `/e2e-dialog boolean` |
+| `/dialog selectfields` | `/e2e-dialog select` |
+| `/dialog textfields` | `/e2e-dialog text` |
+| `/dialog multi-select` | `/e2e-dialog multi-select` |
+| `/dialog dynamic-select` | `/e2e-dialog multi-select` |
+| `/dialog multistep` | `/e2e-dialog multi-step` |
+| `/dialog field-refresh` | `/e2e-dialog field-refresh` |
+| `/dialog datetime-basic` | `/e2e-dialog date` or `/e2e-dialog datetime` |
+| `/dialog datetime-timezone` | `/e2e-dialog datetime` |
 
-Simply delete the `server` or `webapp` folders and remove the corresponding sections from `plugin.json`. The build scripts will skip the missing portions automatically.
+## Releasing this plugin
 
-### How do I include assets in the plugin bundle?
+A new minor version of this plugin is released with every feature release of Mattermost. The new version should be cut until Code complete.
 
-Place them into the `assets` directory. To use an asset at runtime, build the path to your asset and open as a regular file:
+## How to Release
 
-```go
-bundlePath, err := p.API.GetBundlePath()
-if err != nil {
-    return errors.Wrap(err, "failed to get bundle path")
-}
+To trigger a release, follow these steps:
 
-profileImage, err := ioutil.ReadFile(filepath.Join(bundlePath, "assets", "profile_image.png"))
-if err != nil {
-    return errors.Wrap(err, "failed to read profile image")
-}
+1. **For Patch Release:** Run the following command:
+    ```
+    make patch
+    ```
+   This will release a patch change.
 
-if appErr := p.API.SetProfileImage(userID, profileImage); appErr != nil {
-    return errors.Wrap(err, "failed to set profile image")
-}
-```
+2. **For Minor Release:** Run the following command:
+    ```
+    make minor
+    ```
+   This will release a minor change.
 
-### How do I build the plugin with unminified JavaScript?
-Setting the `MM_DEBUG` environment variable will invoke the debug builds. The simplist way to do this is to simply include this variable in your calls to `make` (e.g. `make dist MM_DEBUG=1`).
+3. **For Major Release:** Run the following command:
+    ```
+    make major
+    ```
+   This will release a major change.
+
+4. **For Patch Release Candidate (RC):** Run the following command:
+    ```
+    make patch-rc
+    ```
+   This will release a patch release candidate.
+
+5. **For Minor Release Candidate (RC):** Run the following command:
+    ```
+    make minor-rc
+    ```
+   This will release a minor release candidate.
+
+6. **For Major Release Candidate (RC):** Run the following command:
+    ```
+    make major-rc
+    ```
+   This will release a major release candidate.

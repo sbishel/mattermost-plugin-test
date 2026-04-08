@@ -6,11 +6,12 @@ on:
     branches:
       - master
     tags:
-      - "^v.*"
+      - "v*"
   pull_request:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   plugin-ci:
