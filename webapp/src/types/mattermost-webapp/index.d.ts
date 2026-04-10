@@ -283,9 +283,11 @@ export interface PluginRegistry {
     */
     registerActionAfterChannelCreation(
         ...args: [
-            component: ReactResolvable
+            component: ReactResolvable,
+            action: (channel: Channel) => void
         ] | [{
             component: ReactResolvable;
+            action: (channel: Channel) => void;
         }]
     ): UniqueIdentifier;
 
@@ -322,12 +324,12 @@ export interface PluginRegistry {
     registerChannelIntroButtonAction(
         ...args: [
             icon: ReactResolvable,
-            action: () => void,
-            tooltipText: ReactResolvable
+            action: (channel: Channel) => void,
+            text: ReactResolvable
         ] | [{
             icon: ReactResolvable;
-            action: () => void;
-            tooltipText: ReactResolvable;
+            action: (channel: Channel) => void;
+            text: ReactResolvable;
         }]
     ): UniqueIdentifier;
 
@@ -441,11 +443,13 @@ export interface PluginRegistry {
     */
     registerChannelHeaderMenuAction(
         ...args: [
-            component: ReactResolvable,
-            fn: (channelID: string) => void
+            text: ReactResolvable,
+            action: (channelID: string) => void,
+            shouldRender?: (state: GlobalState) => boolean
         ] | [{
-            component: ReactResolvable;
-            fn: (channelID: string) => void;
+            text: ReactResolvable;
+            action: (channelID: string) => void;
+            shouldRender?: (state: GlobalState) => boolean;
         }]
     ): UniqueIdentifier;
 
@@ -792,10 +796,10 @@ export interface PluginRegistry {
     */
     registerFilePreviewComponent(
         ...args: [
-            override: (fileInfos: FileInfo[], post: Post) => boolean,
-                    component: ReactResolvable
+            override: (fileInfo: FileInfo, post: Post) => boolean,
+            component: ReactResolvable
         ] | [{
-            override: (fileInfos: FileInfo[], post: Post) => boolean;
+            override: (fileInfo: FileInfo, post: Post) => boolean;
             component: ReactResolvable;
         }]
     ): UniqueIdentifier;
@@ -924,6 +928,7 @@ export interface PluginRegistry {
         }]
     ): UniqueIdentifier;
 
+    /** @deprecated Multi-product architecture was removed in Mattermost v9.7 */
     registerProduct(
         ...args: [
             baseURL: string,
@@ -933,7 +938,10 @@ export interface PluginRegistry {
             mainComponent: ReactResolvable,
             headerCentreComponent: ReactResolvable,
             headerRightComponent?: ReactResolvable,
-            showTeamSidebar: boolean
+            showTeamSidebar?: boolean,
+            showAppBar?: boolean,
+            wrapped?: boolean,
+            publicComponent?: ReactResolvable
         ] | [{
             baseURL: string;
             switcherIcon: string;
@@ -942,7 +950,10 @@ export interface PluginRegistry {
             mainComponent: ReactResolvable;
             headerCentreComponent: ReactResolvable;
             headerRightComponent?: ReactResolvable;
-            showTeamSidebar: boolean;
+            showTeamSidebar?: boolean;
+            showAppBar?: boolean;
+            wrapped?: boolean;
+            publicComponent?: ReactResolvable;
         }]
     ): UniqueIdentifier;
 
