@@ -23,6 +23,12 @@ export type Menu = {
     filter?: (id: string) => boolean;
 };
 
+export type ContextArgs = {
+    channel_id: string;
+    team_id: string;
+    root_id: string;
+};
+
 export type UniqueIdentifier = string;
 export type ReactResolvable = React.ReactNode | React.ElementType;
 
@@ -609,13 +615,13 @@ export interface PluginRegistry {
     registerFilesWillUploadHook(
         ...args: [
             hook: (files: File[], uploadFiles: (files: File[]) => void) => {
-                message?: string;
-                files?: File[];
+                message?: string | null;
+                files?: File[] | null;
             }
         ] | [{
             hook: (files: File[], uploadFiles: (files: File[]) => void) => {
-                message?: string;
-                files?: File[];
+                message?: string | null;
+                files?: File[] | null;
             };
         }]
     ): UniqueIdentifier;
@@ -1094,10 +1100,13 @@ export interface PluginRegistry {
                 channel: Channel,
                 teamId: string,
                 args: DesktopNotificationArgs
-            ) => Promise<{
+            ) => {
                 error?: string;
                 args?: DesktopNotificationArgs;
-            }>
+            } | null | undefined | Promise<{
+                error?: string;
+                args?: DesktopNotificationArgs;
+            } | null | undefined>
         ] | [{
             hook: (
                 post: Post,
@@ -1105,10 +1114,13 @@ export interface PluginRegistry {
                 channel: Channel,
                 teamId: string,
                 args: DesktopNotificationArgs
-            ) => Promise<{
+            ) => {
                 error?: string;
                 args?: DesktopNotificationArgs;
-            }>;
+            } | null | undefined | Promise<{
+                error?: string;
+                args?: DesktopNotificationArgs;
+            } | null | undefined>;
         }]
     ): UniqueIdentifier;
 
